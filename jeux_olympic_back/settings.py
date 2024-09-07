@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-n2i9m*ciu66*mfa3ks6%q4j_igshvzorrepj408@2vztakafdc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['jeux-olympic-back.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
