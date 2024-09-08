@@ -28,7 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['jeux-olympic-back.onrender.com', 'localhost', '127.0.0.1']
 
-
+AUTH_USER_MODEL = 'users.CustomUser'
 # Application definition
 
 INSTALLED_APPS = [
@@ -38,8 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'tickets',
     'rest_framework',
+    'tickets',
+    'users',
+    'events',
 ]
 
 MIDDLEWARE = [
