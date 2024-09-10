@@ -1,5 +1,8 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser,BaseUserManager, PermissionsMixin
+from django.forms import ValidationError
+from django.core.validators import validate_email
 
 
 class CustomUserManager(BaseUserManager):
@@ -29,9 +32,24 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_superuser = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['first_name', 'last_name']
 
     objects = CustomUserManager()
+
+    # gestion d'erreur pour l'email, le role et la clé de sécurité
+    def clean(self):
+        try:
+            validate_email(self.email)
+        except ValidationError:
+            raise ValidationError("L'adresse email n'est pas valide.")
+        
+        if self.role not in ['user', 'admin']:
+            raise ValidationError("Le rôle de l'utilisateur est invalide.")
+
+    def save(self, *args, **kwargs):
+        if not self.security_key:
+            self.security_key = str(uuid.uuid4()) 
+        super().save(*args, **kwargs)
 
     def has_perm(self, perm, obj=None):
       return self.is_superuser  
