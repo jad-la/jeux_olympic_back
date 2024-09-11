@@ -1,44 +1,46 @@
 from django.test import TestCase
+from django.urls import reverse
 from users.models import CustomUser
 from django.core.exceptions import ValidationError
+from rest_framework.test import APITestCase
+from rest_framework import status
 
 
 
 class CustomUserModelTest(TestCase):
-    #test avec un email valide
-    def test_create_user_with_valid_email(self):
-        user = CustomUser(
-            email='user@example.com',
-            first_name='Thoma',
-            last_name='Dupont',
-            role='user',
-            security_key='so2567Ee678key'
-        )
-        try:
-            user.clean()  
-        except ValidationError:
-            self.fail('La validation de l\'email a échoué pour un email valide.')
-
-
+ 
     # test aevc un email invalide
     def test_create_user_with_invalid_email(self):
-        user = CustomUser(
-            email='userexample.com',  
-            first_name='Thoma',
-            last_name='Dupont',
-            role='user',
-            security_key='so2567Ee678key'
-        )
         with self.assertRaises(ValidationError):
-            user.clean()  
+            user = CustomUser(
+                email='userexample.com',  
+                first_name='Thoma',
+                last_name='Dupont',
+            )
+            user.full_clean()
 
-    def test_create_user_with_invalid_role(self):
-        user = CustomUser(
-            email='user@example.com',
-            first_name='thoma',
+    # test création d'un utilisateur avec succès avec un clé de sécurité générée
+    def test_create_user(self):
+        user = CustomUser.objects.create_user(
+            email='test1@example.com',
+            first_name='Jean',
             last_name='Dupont',
-            role='testeur', 
-            security_key='so2567Ee678key'
+            password='thepassword123'
         )
-        with self.assertRaises(ValidationError):
-            user.clean()  
+        self.assertEqual(user.email, 'test1@example.com')
+        self.assertTrue(user.check_password('thepassword123'))
+        self.assertIsNotNone(user.security_key)
+
+class RegisterUserViewTest(APITestCase):
+    # test les données avec des mots de passe non identiques si l'API renvoi le bon statut
+    def test_register_with_password_mismatch(self):
+        data = {
+            'email': 'user1@example.com',
+            'first_name': 'Jean',
+            'last_name': 'Dupont',
+            'password': 'thepassword123',
+            'password2': 'thepassword124'
+        }
+        response = self.client.post(reverse('register'), data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('password', response.data)

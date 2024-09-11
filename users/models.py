@@ -24,7 +24,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=150)
-    role = models.CharField(max_length=5, choices=[('user', 'User'), ('admin', 'Admin')], default='user')
     security_key = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -36,24 +35,21 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     objects = CustomUserManager()
 
-    # gestion d'erreur pour l'email, le role et la clé de sécurité
+    # gestion d'erreur pour l'email
     def clean(self):
         try:
             validate_email(self.email)
         except ValidationError:
             raise ValidationError("L'adresse email n'est pas valide.")
-        
-        if self.role not in ['user', 'admin']:
-            raise ValidationError("Le rôle de l'utilisateur est invalide.")
 
     def save(self, *args, **kwargs):
         if not self.security_key:
-            self.security_key = str(uuid.uuid4()) 
+            self.security_key = str(uuid.uuid4())
         super().save(*args, **kwargs)
+
 
     def has_perm(self, perm, obj=None):
       return self.is_superuser  
 
-   
     def has_module_perms(self, app_label):
       return self.is_superuser
