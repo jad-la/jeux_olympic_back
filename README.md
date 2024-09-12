@@ -15,7 +15,7 @@ Le projet coté backend est organisé en plusieurs applications Django :
 
 - **events** : Gère les sports et les événements.
 - **users** : Gère les utilisateurs (l'authentification, création de compte, utilisateur et admin).
-- **tickets** : Gère la réservation des tickets, les paniers et les commandes.
+- **tickets** : Gère la réservation des tickets, les paniers et la génération de QR codes pour les tickets.
 
 
 ## Configuration du projet
@@ -27,12 +27,12 @@ Le projet coté backend est organisé en plusieurs applications Django :
 1. Clonez le projet :
    git clone https://github.com/jad-la/jeux_olympic_back.gitprojet_jeux_olympiques.git
 
-### Créez et activez un environnement virtuel 
+2. Créez et activez un environnement virtuel 
 python -m venv env
 source env/bin/activate  # pour Linux/Mac
 env\Scripts\activate      # pour Windows
 
-### installez les dépendances
+3. installez les dépendances
 pip install -r requirements.txt
 
 ### Documentation des API (Backend)
@@ -48,7 +48,7 @@ pip install -r requirements.txt
   ]
 
 --> Get /api/sports/<id>/events/
-**Description** :Récupère les détails d'un sport spécifique et les événements associés
+**Description** : Récupère les détails d'un sport spécifique et les événements associés
 - **Réponse**(en JSON) :
     [
         {
@@ -62,7 +62,74 @@ pip install -r requirements.txt
         }
     ]
 
+--> POST /api/users/register/
+**Description** : Permet de créer un compte utilisateur.
+- **Paramètres requis**:
+    {
+        "email": "marie@example.com",
+        "first_name": "marie",
+        "last_name": "liam",
+        "password": "Test2-password123",
+        "password2": "Test2-password123"
+    }
 
+--> POST /api/users/login/
+**Description** : Connexion de l'utilisateur.
+- **Paramètres requis**:
+    {   
+        "email": "user1@example.com",
+        "password": "Test-password123"
+    }
+
+--> POST /api/cart/items/
+**Description** : Permet à l'utilisateur connecté d'ajouter un événement à son panier.
+- **Paramètres requis**:
+    {   
+        "event": 2, 
+        "offer": "duo",
+        "quantity": 1
+    }
+
+--> Get /api/cart/
+**Description** : Récupère les arctiles dans le panier.
+- **Réponse(JSON)**:
+    {
+        "id": 1,
+        "user": 2,
+        "created_at": "2024-09-11T21:18:59.426043Z",
+        "items": [
+            {
+                "event": "100 m hommes",
+                "offer": "duo",
+                "quantity": 1,
+                "total_price": 85.00
+            }
+        ]
+    }
+
+--> Post /api/bookings/
+**Description** : Permet à l'utilisateur connecté de réserver les articles dans son panier.
+- **Réponse(JSON)**:
+    {
+        "id": 3,
+        "user": 2,
+        "total_price": "200.00",
+        "booking_date": "2024-09-11T22:23:49.762797Z"
+    }
+
+--> GET /api/tickets/
+**Description** : Récupère la liste des tickets de l'utilisateur, avec le QR code généré.
+- **Réponse(JSON)**:
+    [
+        {
+            "id": 5,
+            "booking": 3,
+            "event": "100 m hommes",
+            "offer": "duo",
+            "qr_code": "http://127.0.0.1:8000/media/qrcodes/qrcode_3.png",
+            "issued_at": "2024-09-11T22:23:50.262443Z"
+        }
+    ]
 ### Modèles de données
 -->Modèle Sport (app events)
     - name : Nom du sport.
@@ -75,13 +142,13 @@ pip install -r requirements.txt
     - date : Date de l'événement.
     - location : Lieu où se déroule l'événement.
     - photo_url : URL de l'image associée à l'événement.
+    - price_solo, price_duo, price_family : Prix des offres en fonction du type de billet.
 
 
 -->Modèle CustomUser (app users)
     - email : Adresse email de l'utilisateur.
     - first_name : Prénom de l'utilisateur.
     - last_name : Nom de l'utilisateur.
-    - role : Rôle de l'utilisateur (user ou admin).
     - security_key : Clé de sécurité générée lors de la création du compte.
     - created_at : Date de création du compte.
 
@@ -105,7 +172,7 @@ pip install -r requirements.txt
 -->Modèle CartItem (app tickets)
     - cart : Référence à un panier (Cart).
     - event : Référence à un événement.
-    - offer : Offre sélectionnée pour cet item du panier (solo, duo, famille).
+    - offer : Offre sélectionnée (solo, duo, famille).
     - quantity : Quantité d'articles dans le panier.
     - total_price : Prix total pour cet article dans le panier.
 

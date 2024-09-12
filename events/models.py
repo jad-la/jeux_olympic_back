@@ -16,6 +16,9 @@ class Event(models.Model):
     time = models.TimeField()
     location = models.CharField(max_length=255)
     photo_url = models.URLField()
+    price_solo = models.DecimalField(max_digits=6, decimal_places=2)
+    price_duo = models.DecimalField(max_digits=6, decimal_places=2)
+    price_family = models.DecimalField(max_digits=6, decimal_places=2)
 
     # validation de donné vérification que la date est dans le futur
     def clean(self):
