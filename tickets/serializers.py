@@ -4,7 +4,8 @@ from .models import CartItem, Cart, Booking, Ticket
 from events.models import Event
 
 class CartItemSerializer(serializers.ModelSerializer):
-    event = EventSerializer(read_only=True)  # Utilise EventSerializer seulement pour la lecture
+    # Utilise EventSerializer seulement pour la lecture
+    event = EventSerializer(read_only=True)  
     event_id = serializers.PrimaryKeyRelatedField(queryset=Event.objects.all(), write_only=True)  
     class Meta:
         model = CartItem
