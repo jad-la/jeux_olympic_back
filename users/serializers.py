@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from .models import CustomUser  # Import du modèle d'utilisateur personnalisé
-from django.contrib.auth.password_validation import validate_password  # Fonction de validation des mots de passe
+from .models import CustomUser  
+from django.contrib.auth.password_validation import validate_password  
 
 # validation et la création d'un nouvel utilisateur lors de l'inscription
 class RegisterSerializer(serializers.ModelSerializer):
@@ -27,3 +27,4 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])  
         user.save() 
         return user 
+    

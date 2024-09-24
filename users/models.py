@@ -4,8 +4,8 @@ from django.contrib.auth.models import AbstractBaseUser,BaseUserManager, Permiss
 from django.forms import ValidationError
 from django.core.validators import validate_email
 
-
 class CustomUserManager(BaseUserManager):
+    # Création d'un utilisateur
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('L\'email est obligatoire')
@@ -14,7 +14,7 @@ class CustomUserManager(BaseUserManager):
         user.set_password(password)
         user.save(using=self._db)
         return user
-
+     # Création un super-utilisateur (admin)
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
@@ -41,7 +41,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             validate_email(self.email)
         except ValidationError:
             raise ValidationError("L'adresse email n'est pas valide.")
-
+        
+    # sauvegarde ou créationde la clé de sécurité lors de la création de l'utilisateur
     def save(self, *args, **kwargs):
         if not self.security_key:
             self.security_key = str(uuid.uuid4())
@@ -53,3 +54,4 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def has_module_perms(self, app_label):
       return self.is_superuser
+    

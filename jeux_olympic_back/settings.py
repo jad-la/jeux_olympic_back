@@ -37,8 +37,10 @@ ALLOWED_HOSTS = ['jeux-olympic-back.onrender.com', 'localhost', '127.0.0.1']
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  
-    "https://jeux-olympic-studi.netlify.app",  
+    "https://jeux-olympic-studi.netlify.app", 
+    "http://192.168.137.1:3000",
 ]
+
 
 AUTH_USER_MODEL = 'users.CustomUser'
 # Application definition
@@ -53,6 +55,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'drf_spectacular',
     'tickets',
     'users',
     'events',
@@ -111,6 +114,14 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API de réservation e-ticket des Jeux Olympiques',
+    'DESCRIPTION': 'API pour gérer les utilisateurs, les événements et les billets',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': True,
 }
 
 # configuration de la durée de validité des tokens
@@ -142,7 +153,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'fr-fr'
 
 TIME_ZONE = 'UTC'
 
