@@ -1,12 +1,24 @@
 from rest_framework import serializers
+from events.serializers import EventSerializer
 from .models import CartItem, Cart, Booking, Ticket
+from events.models import Event
 
 class CartItemSerializer(serializers.ModelSerializer):
+    event = EventSerializer(read_only=True)  # Utilise EventSerializer seulement pour la lecture
+    event_id = serializers.PrimaryKeyRelatedField(queryset=Event.objects.all(), write_only=True)  
     class Meta:
         model = CartItem
-        fields = ['id', 'event', 'offer', 'quantity', 'total_price']
+        fields = ['id', 'event', 'event_id', 'offer', 'quantity', 'total_price']
         read_only_fields = ['total_price']
+    
+    def to_representation(self, instance):
+        print(f'Serializing CartItem: {instance.id}, Event: {instance.event}, Quantity: {instance.quantity}')  
+        return super().to_representation(instance)
 
+    def get_event(self, obj):
+        # Retourne l'ID de l'événement 
+        return obj.event.id
+    
     # Valide que la quantité soit supérieure à zéro
     def validate(self, data):
         if data['quantity'] <= 0:
@@ -15,7 +27,7 @@ class CartItemSerializer(serializers.ModelSerializer):
     
     # Crée un nouvel article dans le panier en calculant le prix total en fonction de la quantité
     def create(self, validated_data):
-        event = validated_data['event']
+        event = validated_data['event_id']
         offer = validated_data['offer']
         quantity = validated_data['quantity']
 
@@ -30,7 +42,7 @@ class CartItemSerializer(serializers.ModelSerializer):
 
         # Créer l'article avec le prix total calculé
         cart_item = CartItem.objects.create(
-            cart=validated_data['cart'],
+            cart=self.context['cart'],
             event=event,
             offer=offer,
             quantity=quantity,
@@ -41,6 +53,7 @@ class CartItemSerializer(serializers.ModelSerializer):
 
 class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Cart
@@ -60,6 +73,11 @@ class BookingSerializer(serializers.ModelSerializer):
     # Crée une réservation en calculant le prix total du panier et en générant les billets
     def create(self, validated_data):
         cart = Cart.objects.get(user=self.context['request'].user)
+
+        # Vérification du panier s'il n'est pas vide
+        if cart.items.count() == 0:
+            raise serializers.ValidationError("Votre panier est vide. Vous ne pouvez pas faire de réservation sans articles.")
+        
         total_price = sum(item.total_price for item in cart.items.all())
 
         # Créer la réservation
@@ -79,6 +97,9 @@ class BookingSerializer(serializers.ModelSerializer):
         return booking    
 
 class TicketSerializer(serializers.ModelSerializer):
+    event = EventSerializer(read_only=True)
+    booking = BookingSerializer(read_only=True)
+    
     class Meta:
         model = Ticket
         fields = ['id', 'booking', 'event', 'offer', 'qr_code', 'issued_at']
