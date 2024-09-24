@@ -5,8 +5,11 @@ from django.forms import ValidationError
 import qrcode
 import io
 from django.core.files.base import ContentFile
+from PIL import Image, ImageDraw, ImageFont
 from events.models import Event
+import logging
 
+logger = logging.getLogger(__name__)
 
 class Booking(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -37,42 +40,54 @@ class Ticket(models.Model):
         if not self.security_key:
             raise ValidationError("La clé de sécurité ne peut pas être vide.")
         
-    # Génération de la clé de sécurité et du QR code
-    def save(self, *args, **kwargs):
-        if not self.security_key:
-            self.security_key = self.generate_security_key()
-
-        # Concaténer les clés ici
-        final_key = f'{self.booking.user.security_key}-{self.security_key}'
-        # info à inclure dans le QR code
-        data = {
-            "identifiant_unique": final_key,
-            "buyer_name": f'{self.booking.user.first_name} {self.booking.user.last_name}',
-            "event_name": self.event.name,
-            "event_date": self.event.date.strftime('%Y-%m-%d'),
-            "event_time": self.event.date.strftime('%H:%M'),
-            "event_location": self.event.location,
-            "offer": self.offer
-        }
-        qr_data = json.dumps(data)
-        
-        # Génération du QR code
-        qr = qrcode.QRCode(version=1, box_size=10, border=5)
-        qr.add_data(qr_data)
-        qr.make(fit=True)
-
-        img = qr.make_image(fill='black', back_color='white')
-        buffer = io.BytesIO()
-        img.save(buffer, format="PNG")
-        file_name = f'qrcode_{self.booking.id}.png'
-        self.qr_code.save(file_name, ContentFile(buffer.getvalue()), save=False)
-
-        super().save(*args, **kwargs)
-
+    
     # Génère une clé de sécurité unique
     def generate_security_key(self):
         import uuid
         return str(uuid.uuid4())
+
+    # Génére le QR code à partir des clés de sécurité
+    def generate_qr_code(self):
+        qr = qrcode.QRCode(version=1, box_size=10, border=5)
+        qr.add_data(f'{self.booking.user.security_key}-{self.security_key}')
+        qr.make(fit=True)
+        qr_code_img = qr.make_image(fill='black', back_color='white')
+        return qr_code_img
+
+    # Création l'image du billet en y ajoutant le QR code
+    def create_ticket_image(self, qr_code_img):
+        qr_img_pil = qr_code_img.convert("RGB")
+        qr_img_pil = qr_img_pil.resize((200, 200))
+
+        ticket_image = Image.new('RGB', (500, 500), 'white')
+        draw = ImageDraw.Draw(ticket_image)
+        font = ImageFont.load_default()
+
+        # Ajout des info sur l'image du billet
+        text = f"Événement: {self.event.name}\nDate: {self.event.date}\n"
+        text += f"Lieu: {self.event.location}\nNom: {self.booking.user.first_name} {self.booking.user.last_name}"
+        draw.text((10, 10), text, font=font, fill="black")
+
+        ticket_image.paste(qr_img_pil, (10, 250))
+        return ticket_image
+
+    # Sauvegarde l'image dans un fichier temporaire
+    def save_ticket_image(self, ticket_image):
+        buffer = io.BytesIO()
+        ticket_image.save(buffer, format="PNG")
+        filename = f"ticket_{self.id}.png"
+        self.qr_code.save(filename, ContentFile(buffer.getvalue()), save=False)
+
+    # sauvegarde
+    def save(self, *args, **kwargs):
+        if not self.security_key:
+            self.security_key = self.generate_security_key()
+        
+        qr_code_img = self.generate_qr_code()
+        ticket_image = self.create_ticket_image(qr_code_img)
+        self.save_ticket_image(ticket_image)
+
+        super().save(*args, **kwargs)
 
 class Cart(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
