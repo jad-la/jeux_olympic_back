@@ -24,3 +24,4 @@ class Event(models.Model):
     def clean(self):
         if self.date < timezone.now().date():
             raise ValidationError("La date de l'événement ne peut pas être dans le passé.")
+
