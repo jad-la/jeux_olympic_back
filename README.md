@@ -28,7 +28,7 @@ Le projet coté backend est organisé en plusieurs applications Django :
 
 ### Installation
 1. Clonez le projet :
-   git clone https://github.com/jad-la/jeux_olympic_back.gitprojet_jeux_olympiques.git
+   git clone https://github.com/jad-la/jeux_olympic_back.git
 
 2. Créez et activez un environnement virtuel 
 python -m venv env
