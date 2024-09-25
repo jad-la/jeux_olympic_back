@@ -41,6 +41,6 @@ class RegisterUserViewTest(APITestCase):
             'password': 'thepassword123',
             'password2': 'thepassword124'
         }
-        response = self.client.post(reverse('register'), data)
+        response = self.client.post(reverse('register_user'), data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('password', response.data)
