@@ -58,3 +58,7 @@ Le backend est déployé sur Render. Voici les étapes pour effectuer le déploi
 - Assurez-vous que votre dépôt GitHub est connecté à Render.
 - Déployez l'application en cliquant sur "New Web Service".
 
+
+### Lien espace admin 
+voila le lien espace admin l'email et le mot de passe sont mentionné dans la copie du bloc3
+https://jeux-olympic-back.onrender.com/admin
