@@ -15,20 +15,29 @@ from decouple import config
 from datetime import timedelta
 import os
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Chemin fichiers media 
+# Configuration des fichiers médias
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-# URL pour accéder aux fichiers media
 MEDIA_URL = '/media/'
+
+# Configuration de Cloudinary
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': config('CLOUDINARY_API_KEY'),
+    'API_SECRET': config('CLOUDINARY_API_SECRET'),
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-n2i9m*ciu66*mfa3ks6%q4j_igshvzorrepj408@2vztakafdc'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -56,6 +65,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'drf_spectacular',
+    'cloudinary',
+    'cloudinary_storage',
     'tickets',
     'users',
     'events',
