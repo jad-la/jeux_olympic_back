@@ -1,8 +1,6 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser,BaseUserManager, PermissionsMixin
-from django.forms import ValidationError
-from django.core.validators import validate_email
 
 class CustomUserManager(BaseUserManager):
     # Création d'un utilisateur
@@ -35,12 +33,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     objects = CustomUserManager()
 
-    # gestion d'erreur pour l'email
-    def clean(self):
-        try:
-            validate_email(self.email)
-        except ValidationError:
-            raise ValidationError("L'adresse email n'est pas valide.")
         
     # sauvegarde ou créationde la clé de sécurité lors de la création de l'utilisateur
     def save(self, *args, **kwargs):
