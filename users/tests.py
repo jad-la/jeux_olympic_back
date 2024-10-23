@@ -44,3 +44,42 @@ class RegisterUserViewTest(APITestCase):
         response = self.client.post(reverse('register_user'), data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('password', response.data)
+    
+class TokenObtainPairSerializerTest(APITestCase):
+    def setUp(self):
+        self.user = CustomUser.objects.create_user(
+            email='user3@example.com',
+            first_name='Paul',
+            last_name='Dupont',
+            password='testpassword123'
+        )
+
+    # Test connexion avec des identifiants valides
+    def test_login_success(self):
+        data = {
+            'email': 'user3@example.com',
+            'password': 'testpassword123'
+        }
+        response = self.client.post(reverse('token_obtain_pair'), data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)  
+
+    # Test de la connexion avec un mot de passe incorrect
+    def test_login_with_wrong_password(self):
+        data = {
+            'email': 'user3@example.com',
+            'password': 'password'
+        }
+        response = self.client.post(reverse('token_obtain_pair'), data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn('detail', response.data) 
+
+    # Test de la connexion avec un email incorrect
+    def test_login_with_invalid_email(self):
+        data = {
+            'email': 'user@example.com',
+            'password': 'testpassword123'
+        }
+        response = self.client.post(reverse('token_obtain_pair'), data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIn('detail', response.data)  
