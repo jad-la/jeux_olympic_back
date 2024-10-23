@@ -1,10 +1,12 @@
 from rest_framework import serializers
 from .models import CustomUser  
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.password_validation import validate_password 
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError 
-from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model
 
+CustomUser = get_user_model()
 # validation et la création d'un nouvel utilisateur lors de l'inscription
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password]) 
@@ -56,21 +58,31 @@ class RegisterSerializer(serializers.ModelSerializer):
     
 
 # validation et connexion d'utilisateur 
-class LoginSerializer(serializers.Serializer):
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, required=True)
 
-    def validate(self, data):
-        # Vérifier si l'email et le mot de passe sont corrects
-        user = authenticate(email=data['email'], password=data['password'])
-        
-        if not user:
-            raise serializers.ValidationError("Les informations de connexion sont incorrectes.")
-          
-        # sinon retourne les données validées 
-        return data
+    def validate(self, attrs):
+        # Vérifier si l'utilisateur avec cet email existe
+        try:
+            user = CustomUser.objects.get(email=attrs['email'])
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError({'email': 'Cet email n\'existe pas.'})
 
-    # pour obtenir l'utilisateur authentifié
-    def get_user(self):
-        email = self.validated_data['email']
-        return CustomUser.objects.get(email=email)
+        # Vérifier si le mot de passe est correct
+        if not user.check_password(attrs['password']):
+            raise serializers.ValidationError({'password': 'Le mot de passe est incorrect.'})
+
+        # Si les informations d'identification sont correctes, continue avec l'émission du token
+        data = super().validate(attrs)
+
+        # Optionnel: Ajouter des informations supplémentaires dans la réponse du token
+        data.update({
+            'user': {
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name
+            }
+        })
+
+        return data
